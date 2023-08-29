@@ -172,18 +172,18 @@
                         'cluster': true,
                         'clusterRadius': 50
                     });
+
+                    // Adjust the map's viewport to fit the bounds of the data
+                        let bounds = new mapboxgl.LngLatBounds();
+                        geojsonData.features.forEach(function(feature) {
+                        bounds.extend(feature.geometry.coordinates);
+                    });
+                        map.fitBounds(bounds, {
+                        padding: 20
+                    });
                 });
             }
 
-
-            // Adjust the map's viewport to fit the bounds of the data
-            let bounds = new mapboxgl.LngLatBounds();
-            geojsonData.features.forEach(function(feature) {
-                bounds.extend(feature.geometry.coordinates);
-            });
-            map.fitBounds(bounds, {
-                padding: 20
-            });
 
             // Add navigation controls to the map
             map.addControl(new mapboxgl.NavigationControl());
