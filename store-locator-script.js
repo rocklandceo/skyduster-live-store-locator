@@ -1,9 +1,9 @@
-    // Mapbox token
+// Mapbox token
     mapboxgl.accessToken = 'pk.eyJ1Ijoicm9ja2xhbmQtY2VvIiwiYSI6ImNsbHI5dHU3aTBrOGY0bG0yb2RrMTd6ZGYifQ.1dMr1yO7WZW3zlQA25H46Q';
 
     // Constants
     const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
-    
+
     // Initialize the map
     const map = new mapboxgl.Map({
         container: 'map',
@@ -12,112 +12,67 @@
         zoom: 7,
     });
 
-    // Event Listeners
-    $(document).ready(function() {
-        setupEventListeners();
-    });
-
-    function setupEventListeners() {
-        $("#find-nearest-button").on("click", showSearchInput);
-        $("#search-button").on("click", handleSearchButtonClick);
-        $(".close-block").on('click', hideLocationInfo);
-    }
-
-    function showSearchInput(e) {
-        e.preventDefault();
-        $(".map-search-input-wrapper").css("display", "flex");
-    }
-
-    function handleSearchButtonClick(e) {
-        e.preventDefault();
-        $(".map-search-input-wrapper").css("display", "none");
-        searchNearestLocation();
-    }
-
-    function searchNearestLocation() {
-        const userAddress = $("#address-input").val();
-        if (!userAddress) {
-            alert("Please enter an address.");
-            return;
-        }
-
-        geocodeAddress(userAddress, function(error, coords) {
-            if (error) {
-                alert("Error geocoding address: " + error);
-                return;
-            }
-
-            const locationsSource = map.getSource('locations');
-            if (!locationsSource) {
-                alert("Locations data hasn't loaded yet. Please try again in a few seconds.");
-                return;
-            }
-
-            const nearestLocation = findNearestLocation(coords, locationsSource._data.features);
-            if (nearestLocation) {
-                handleMarkerTap(nearestLocation);
-                map.flyTo({
-                    center: nearestLocation.geometry.coordinates,
-                    zoom: 12
-                });
-            } else {
-                alert('No nearby locations found.');
-            }
-        });
-    }
+    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
 
     function handleMarkerTap(feature) {
+      console.log("Tapped feature:", feature);
         const locationData = feature.properties;
+      console.log("Location data:", locationData);
+        const ID = feature.properties['Array ID'];
+      console.log("ID:", ID);
 
-        // Log for debugging purposes
-        console.log("Tapped feature:", feature);
-        console.log("Location data:", locationData);
-        console.log("ID:", locationData['Array ID']);
 
-        // Map each element in the .locations-map_item div to the corresponding data from the CSV
-        $(".location-image").attr("src", locationData["Customer Profile Image"]);
-        $(".card_heading").text(locationData["Customer Name"]);
-        $(".locations-map_city").text(locationData["City"]);
-        $(".location_street-address").text(locationData["Street"]);
-        $(".location-city_block").text(locationData["City"]); // Reused the same "City" header as per your list
-        $(".location-zip_block").text(locationData["Zip"]);
-        $(".card_link-block_phone").attr("href", "tel:" + locationData["Phone URL"]);
-        $(".card_link-text-block_phone").text(locationData["Phone"]);
-        $(".card_link-block_directions").attr("href", locationData["Google Maps URL"]);
-        $(".card_link-text-directions").text("Get Directions");
-        $(".card_description").html(locationData["Customer Details"]);
+          // Map each element in the .locations-map_item div to the corresponding data from the CSV using the updated headers
+          $(".location-image").attr("src", locationData["Customer Profile Image"]);
+          $(".card_heading").text(locationData["Customer Name"]);
+          $(".locations-map_city").text(locationData["City"]);
+          $(".location_street-address").text(locationData["Street"]);
+          $(".location-city_block").text(locationData["City"]); // Reused the same "City" header as per your list
+          $(".location-zip_block").text(locationData["Zip"]);
+          $(".card_link-block_phone").attr("href", "tel:" + locationData["Phone URL"]);
+          $(".card_link-text-block_phone").text(locationData["Phone"]);
+          $(".card_link-block_directions").attr("href", locationData["Google Maps URL"]);
+          $(".card_link-text-directions").text("Get Directions");
+          $(".card_description").html(locationData["Customer Details"]);
+              if (locationData["Customer Details"].trim() === "") {
+                  $(".location-description_wrapper").hide();
+              } else {
+                  $(".location-description_wrapper").show();
+              }
 
-        // Show or hide the description wrapper based on the presence of customer details
-        $(".location-description_wrapper").toggle(locationData["Customer Details"].trim() !== "");
+              // Check if Phone URL is blank
+              if (locationData["Phone URL"].trim() === "") {
+                  $(".card_link-block_phone").hide();
+              } else {
+                  $(".card_link-block_phone").show();
+              }
 
-        // Show or hide the phone link based on the presence of a phone URL
-        $(".card_link-block_phone").toggle(locationData["Phone URL"].trim() !== "");
+          // Show the .locations-map_item
+          $(".locations-map_item, .locations-map_wrapper").addClass("is--show");
+      }
 
-        // Show the .locations-map_item
-        $(".locations-map_item, .locations-map_wrapper").addClass("is--show");
-    }
+    $.get(GOOGLE_SHEETS_CSV_URL, function(data) {
 
-    function processCSVData(data) {
         // Error handling for CSV parsing
         const parsedCSV = Papa.parse(data, {
-            header: true,
-            skipEmptyLines: true
+          header: true,
+          skipEmptyLines: true
         });
 
         if (parsedCSV.errors.length > 0) {
-            console.error("Errors parsing CSV data: ", parsedCSV.errors);
-            alert("There was an error processing location data. Please notify the website administrator.");
-            return null;
+          console.error("Errors parsing CSV data: ", parsedCSV.errors);
+          alert("There was an error processing location data. Please notify the website administrator.");
+          return;
         }
 
         // Error handling for data integrity
         const requiredColumns = ["Latitude", "Longitude", "Customer Profile Image", "Customer Name", "City", "Street", "Zip", "Phone URL", "Phone", "Google Maps URL", "Customer Details"];
-        const missingColumns = requiredColumns.filter(column => !parsedCSV.meta.fields.includes(column));
+          const missingColumns = requiredColumns.filter(column => !parsedCSV.meta.fields.includes(column));
 
         if (missingColumns.length > 0) {
-            console.error("Missing essential columns in CSV data: ", missingColumns);
-            alert("There's an issue with the location data structure. Please notify the website administrator.");
-            return null;
+          console.error("Missing essential columns in CSV data: ", missingColumns);
+          alert("There's an issue with the location data structure. Please notify the website administrator.");
+          return;
         }
 
         let geojsonData = {
@@ -136,58 +91,38 @@
             });
         });
 
-        return geojsonData;
-    }
+        let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
 
-            // Function to fetch or retrieve cached CSV data
-            function fetchOrRetrieveCSVData(url, callback) {
-                // Check if data is in localStorage
-                const cachedData = localStorage.getItem('cachedCSVData');
-                
-                if (cachedData) {
-                    console.log('Using cached data.');
-                    callback(cachedData); // Use cached data
-                    return;
-                }
+        parsedCSV.data.forEach(row => {
+            const lat = parseFloat(row.Latitude);
+            const lon = parseFloat(row.Longitude);
 
-                // Fetch data if not in localStorage
-                $.get(url, function(data) {
-                    console.log('Fetching new data.');
-                    localStorage.setItem('cachedCSVData', data); // Cache the data
-                    callback(data); // Use the fetched data
-                });
-            }
+    function fetchAndDisplayCSVData() {
+        $.get(GOOGLE_SHEETS_CSV_URL, function(data) {
+            const geojsonData = processCSVData(data);
+            if (!geojsonData) return;
 
-            // Your existing function, modified to use the caching mechanism
-            function fetchAndDisplayCSVData() {
-                fetchOrRetrieveCSVData(GOOGLE_SHEETS_CSV_URL, function(data) {
-                    const geojsonData = processCSVData(data);
-                    if (!geojsonData) return;
+            // Add the geojson data as a source to the map
+            map.addSource('locations', {
+                'type': 'geojson',
+                'data': geojsonData,
+                'cluster': true,
+                'clusterRadius': 50
+            });
 
-                    // Add the geojson data as a source to the map
-                    map.addSource('locations', {
-                        'type': 'geojson',
-                        'data': geojsonData,
-                        'cluster': true,
-                        'clusterRadius': 50
-                    });
+            // Adjust the map's viewport to fit the bounds of the data
+            let bounds = new mapboxgl.LngLatBounds();
+            geojsonData.features.forEach(function(feature) {
+                bounds.extend(feature.geometry.coordinates);
+            });
+            map.fitBounds(bounds, {
+                padding: 20
+            });
 
-                    // Adjust the map's viewport to fit the bounds of the data
-                        let bounds = new mapboxgl.LngLatBounds();
-                        geojsonData.features.forEach(function(feature) {
-                        bounds.extend(feature.geometry.coordinates);
-                    });
-                        map.fitBounds(bounds, {
-                        padding: 20
-                    });
-                });
-            }
-
-
-            // Add navigation controls to the map
+            // Control for navigation
             map.addControl(new mapboxgl.NavigationControl());
 
-            // Define the cluster layer
+            // Cluster circles
             map.addLayer({
                 'id': 'clusters',
                 'type': 'circle',
@@ -198,16 +133,16 @@
                     'circle-radius': [
                         'step',
                         ['get', 'point_count'],
-                        20,  // circle radius for cluster count = 20
-                        100, // circle radius for cluster count = 100
-                        30,  // circle radius for cluster count = 30
-                        750, // circle radius for cluster count = 750
-                        40   // circle radius for cluster count = 40
+                        20,     // circle radius for cluster count = 20
+                        100,    // circle radius for cluster count = 100
+                        30,     // circle radius for cluster count = 30
+                        750,    // circle radius for cluster count = 750
+                        40      // circle radius for cluster count = 40
                     ]
                 }
             });
 
-            // Define the cluster count labels
+            // Cluster count labels
             map.addLayer({
                 'id': 'cluster-count',
                 'type': 'symbol',
@@ -223,7 +158,8 @@
                 }
             });
 
-            // Load custom marker and define individual locations layer
+            console.log(handleMarkerTap);
+            // Custom markers for each location
             map.loadImage('https://uploads-ssl.webflow.com/63a8b8d4f3ba371ef3eca92c/64eb74f60202b90fc8998067_skydusterAsset%201map-marker.png', function(error, image) {
                 if (error) throw error;
                 map.addImage('custom-marker', image);
@@ -238,34 +174,24 @@
                         'icon-size': 0.35
                     }
                 });
-            });
 
-            // Set up click interactions for clusters
-            map.on('click', 'clusters', (e) => {
-                const features = map.queryRenderedFeatures(e.point, {
-                    layers: ['clusters']
-                });
-                const clusterId = features[0].properties.cluster_id;
-                map.getSource('locations').getClusterExpansionZoom(
-                    clusterId,
-                    (err, zoom) => {
-                        if (err) return;
-                        map.easeTo({
-                            center: features[0].geometry.coordinates,
-                            zoom: zoom
-                        });
-                    }
-                );
-            });
+                map.on('click', 'clusters', (e) => {
+                    const features = map.queryRenderedFeatures(e.point, {
+                        layers: ['clusters']
+                    });
+                    const clusterId = features[0].properties.cluster_id;
+                    map.getSource('locations').getClusterExpansionZoom(
+                        clusterId,
+                        (err, zoom) => {
+                            if (err) return;
 
-            // Set up click interactions for individual locations
-            map.on('click', 'locations', (e) => {
-                const features = map.queryRenderedFeatures(e.point, {
-                    layers: ['locations']
+                            map.easeTo({
+                                center: features[0].geometry.coordinates,
+                                zoom: zoom
+                            });
+                        }
+                    );
                 });
-                if (features.length) {
-                    handleMarkerTap(features[0]);
-                }
             });
 
             // Hide location details when clicking outside of any location
@@ -281,12 +207,11 @@
             // Hide the default Mapbox attribution and add your custom image
             $('.mapboxgl-ctrl-attrib').hide();
             $('.mapboxgl-ctrl-bottom-right').append('<img src="https://uploads-ssl.webflow.com/63a8b8d4f3ba371ef3eca92c/63a8d6cef3af9936f047f013_SD-Logo_HORIZONTAL_GreenAsset%201.svg" alt="Skyduster Dark Logo" class="custom-map-image">');
-
-        fail(function(jqXHR, textStatus, errorThrown) {
+        }).fail(function(jqXHR, textStatus, errorThrown) {
             console.error("Error fetching data: ", textStatus, errorThrown);
             alert("There was an error fetching location data. Please try again later.");
         });
-    
+    }
 
     function geocodeAddress(address, callback) {
         // Construct the URL for Mapbox's Geocoding API
@@ -305,32 +230,87 @@
         });
     }
 
-    function findNearestLocation(userCoords, locations) {
-        let nearestLocation;
-        let nearestDistance = Infinity;
+            // Find the nearest location with Turf
+                function findNearestLocation(userCoords, locations) {
+                    let nearestLocation;
+                    let nearestDistance = Infinity;
+                    
+                    locations.forEach(location => {
+                        const locationCoords = location.geometry.coordinates;
+                        const distance = turf.distance(turf.point(userCoords), turf.point(locationCoords));
+                        
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestLocation = location;
+                        }
+                    });
+                    
+                    return nearestLocation;
+                }
 
-        // Iterate through each location to find the nearest one
-        locations.forEach(location => {
-            const locationCoords = location.geometry.coordinates;
-            // Calculate the distance between the user's coordinates and the current location's coordinates
-            const distance = turf.distance(turf.point(userCoords), turf.point(locationCoords));
+            // Display the nearest location
+                    $("#search-button").on("click", function() {
+                        const address = $("#address-input").val();
+                        if (!address) return;
 
-            // If this location is nearer than the previously found nearest location, update the nearest location and distance
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                nearestLocation = location;
-            }
+                        geocodeAddress(address, function(error, coords) {
+                            if (error) {
+                                alert(error);
+                                return;
+                            }
+
+                            const locationsSource = map.getSource('locations');
+                            const nearestLocation = findNearestLocation(coords, locationsSource._data.features);
+
+                            if (nearestLocation) {
+                                handleMarkerTap(nearestLocation);
+                                map.flyTo({
+                                    center: nearestLocation.geometry.coordinates,
+                                    zoom: 12
+                                });
+                            } else {
+                                alert('No nearby locations found.');
+                            }
+                        });
+                    });
+
+            // Event listeners for the map
+            map.on('click', 'locations', (e) => {
+                const features = map.queryRenderedFeatures(e.point, {
+                    layers: ['locations']
+                });
+                console.log("Features found: ", features.length);
+                if (features.length) {
+                    handleMarkerTap(features[0]);
+                }
+            });
+
+            // Add this just after the above event listener
+            map.on('click', function(e) {
+              const features = map.queryRenderedFeatures(e.point, {
+                layers: ['locations']
+              });
+              console.log("Features found: ", features.length);
+              if (!features.length) {
+                $(".locations-map_item, .locations-map_wrapper").removeClass("is--show");
+              }
+            });
+
+                // Hide the .mapboxgl-ctrl-attrib element
+            $('.mapboxgl-ctrl-attrib').hide();
+
+            // Append your image to .mapboxgl-ctrl-bottom-right
+            $('.mapboxgl-ctrl-bottom-right').append('<img src="https://uploads-ssl.webflow.com/63a8b8d4f3ba371ef3eca92c/63a8d6cef3af9936f047f013_SD-Logo_HORIZONTAL_GreenAsset%201.svg" alt="Skyduster Dark Logo" class="custom-map-image">');
+
+
+    
         });
+      }).fail(function(jqXHR, textStatus, errorThrown) {
+          console.error("Error fetching data: ", textStatus, errorThrown);
+          alert("There was an error fetching location data. Please try again later.");
+      });
 
-        // Return the nearest location
-        return nearestLocation;
-    }
-
-    function hideLocationInfo() {
-        $(".locations-map_item, .locations-map_wrapper").removeClass("is--show");
-    }
-
-    // After the map is loaded
-    map.on('load', function() {
-        fetchAndDisplayCSVData();
+    // Add an event listener for the close button
+    $(".close-block").on('click', function() {
+      $(".locations-map_item, .locations-map_wrapper").removeClass("is--show");
     });
