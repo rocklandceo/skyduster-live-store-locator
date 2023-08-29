@@ -1,6 +1,9 @@
     // Mapbox token
     mapboxgl.accessToken = 'pk.eyJ1Ijoicm9ja2xhbmQtY2VvIiwiYSI6ImNsbHI5dHU3aTBrOGY0bG0yb2RrMTd6ZGYifQ.1dMr1yO7WZW3zlQA25H46Q';
 
+        // Constants
+        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
+    
     // Initialize the map
     const map = new mapboxgl.Map({
         container: 'map',
@@ -9,11 +12,6 @@
         zoom: 7,
         cooperativeGestures: true
     });
-
-    map.addControl(new mapboxgl.FullscreenControl());
-
-    // Constants
-    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
 
     // Event Listeners
     $(document).ready(function() {
