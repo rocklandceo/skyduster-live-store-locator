@@ -10,7 +10,6 @@
         style: 'mapbox://styles/rockland-ceo/clltjtmy7004o01rcgz1i8z6h',
         center: [-118.239364, 34.058241],
         zoom: 7,
-        cooperativeGestures: true
     });
 
     // Event Listeners
