@@ -59,7 +59,7 @@
           handleMarkerTap(nearestLocation);
           map.flyTo({
               center: nearestLocation.geometry.coordinates,
-              zoom: 12
+              zoom: 10
           });
       } else {
           alert('No nearby locations found.');
