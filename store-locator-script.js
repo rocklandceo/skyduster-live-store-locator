@@ -56,7 +56,6 @@
 
       const nearestLocation = findNearestLocation(coords, locationsSource._data.features);
       if (nearestLocation) {
-          handleMarkerTap(nearestLocation);
           map.flyTo({
               center: nearestLocation.geometry.coordinates,
               zoom: 10
