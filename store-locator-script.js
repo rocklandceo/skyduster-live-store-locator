@@ -1,16 +1,19 @@
     // Mapbox token
     mapboxgl.accessToken = 'pk.eyJ1Ijoicm9ja2xhbmQtY2VvIiwiYSI6ImNsbHI5dHU3aTBrOGY0bG0yb2RrMTd6ZGYifQ.1dMr1yO7WZW3zlQA25H46Q';
 
-    // Constants
-    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
-
     // Initialize the map
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/rockland-ceo/clltjtmy7004o01rcgz1i8z6h',
         center: [-118.239364, 34.058241],
-        zoom: 7
+        zoom: 7,
+        cooperativeGestures: true
     });
+
+    map.addControl(new mapboxgl.FullscreenControl());
+
+    // Constants
+    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
 
     // Event Listeners
     $(document).ready(function() {
@@ -139,18 +142,41 @@
         return geojsonData;
     }
 
-    function fetchAndDisplayCSVData() {
-        $.get(GOOGLE_SHEETS_CSV_URL, function(data) {
-            const geojsonData = processCSVData(data);
-            if (!geojsonData) return;
+            // Function to fetch or retrieve cached CSV data
+            function fetchOrRetrieveCSVData(url, callback) {
+                // Check if data is in localStorage
+                const cachedData = localStorage.getItem('cachedCSVData');
+                
+                if (cachedData) {
+                    console.log('Using cached data.');
+                    callback(cachedData); // Use cached data
+                    return;
+                }
 
-            // Add the geojson data as a source to the map
-            map.addSource('locations', {
-                'type': 'geojson',
-                'data': geojsonData,
-                'cluster': true,
-                'clusterRadius': 50
-            });
+                // Fetch data if not in localStorage
+                $.get(url, function(data) {
+                    console.log('Fetching new data.');
+                    localStorage.setItem('cachedCSVData', data); // Cache the data
+                    callback(data); // Use the fetched data
+                });
+            }
+
+            // Your existing function, modified to use the caching mechanism
+            function fetchAndDisplayCSVData() {
+                fetchOrRetrieveCSVData(GOOGLE_SHEETS_CSV_URL, function(data) {
+                    const geojsonData = processCSVData(data);
+                    if (!geojsonData) return;
+
+                    // Add the geojson data as a source to the map
+                    map.addSource('locations', {
+                        'type': 'geojson',
+                        'data': geojsonData,
+                        'cluster': true,
+                        'clusterRadius': 50
+                    });
+                });
+            }
+
 
             // Adjust the map's viewport to fit the bounds of the data
             let bounds = new mapboxgl.LngLatBounds();
