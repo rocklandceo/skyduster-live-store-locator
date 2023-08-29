@@ -58,7 +58,7 @@
       if (nearestLocation) {
           map.flyTo({
               center: nearestLocation.geometry.coordinates,
-              zoom: 14
+              zoom: 15
           });
       } else {
           alert('No nearby locations found.');
