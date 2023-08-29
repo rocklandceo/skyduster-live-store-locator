@@ -12,8 +12,6 @@
         zoom: 7,
     });
 
-    const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1n8emJif1ErvRCM_Mn0UBIUGhYY8RNYdrN4aQaZTSoNY/gviz/tq?tqx=out:csv&sheet=Off-Premise-Accounts";
-
     function handleMarkerTap(feature) {
       console.log("Tapped feature:", feature);
         const locationData = feature.properties;
